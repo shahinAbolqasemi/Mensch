@@ -9,19 +9,19 @@ class LudoHandler:
         self.__players = []
         self.__players_name = []
 
-    def add_player(self, player_name):
-        if self.__players_count < 4:
-            chosen_color = self.__set_color()
-            player = self.Player(player_name, chosen_color, self.__players_count)
-            self.__players_count += 1
-            self.__players_name.append(f'{player_name}: {chosen_color}')
-            self.__players.append(player)
-            sorted_key = lambda x: 1 if 'RED' in x else 2 if 'GREEN' in x else 3 \
-                if 'BLUE' in x else 4 if 'YELLOW' in x else None
-            self.__players_name = sorted(self.__players_name, key=sorted_key)
-            return player
-        else:
-            print('Error: players count must be between 0 and 5')
+    def add_player(self, player_name, color):
+        # if self.__players_count < 4:
+            # chosen_color = self.__set_color()
+        player = self.Player(player_name, color, self.__players_count)
+        self.__players_count += 1
+        self.__players_name.append(f'{player_name}: {color}')
+        self.__players.append(player)
+        # sorted_key = lambda x: 1 if 'RED' in x else 2 if 'GREEN' in x else 3 \
+        #     if 'BLUE' in x else 4 if 'YELLOW' in x else None
+        # self.__players_name = sorted(self.__players_name, key=sorted_key)
+        return player
+        # else:
+        #     print('Error: players count must be between 0 and 5')
 
     def __set_color(self):
         if self.__colors:
@@ -110,22 +110,22 @@ class LudoHandler:
 
         class Piece:
             START_POS = {
-                'RED': 0,
-                'GREEN': 6,
-                'BLUE': 12,
+                'BLUE': 0,
+                'RED': 6,
+                'GREEN': 12,
                 'YELLOW': 18,
             }
 
             def __init__(self, player):
-                self.__id = player.pieces_count + 1
+                self.id = player.pieces_count + 1
                 self.__pos = ...
                 self.player_id = player.player_id
-                self.__color = player.color
+                self.color = player.color
                 self.player = player
 
             @property
             def piece_pos(self):
-                return (self.__pos + self.START_POS[self.__color]) % 24
+                return (self.__pos + self.START_POS[self.color]) % 24
 
             def move(self, dice_n):
                 if (self.__pos + dice_n) < 24:
@@ -134,7 +134,7 @@ class LudoHandler:
                     self.__pos += dice_n
                     return True
                 else:
-                    print(f'Warning: invalid dice number to move piece{self.__id}')
+                    print(f'Warning: invalid dice number to move piece{self.id}')
                 return False
 
             def get_start(self):
@@ -145,8 +145,8 @@ class LudoHandler:
 
             @property
             def piece_id(self):
-                return self.__id
+                return self.id
 
             def __repr__(self):
-                return f'Player{self.player_id}.Piece{self.__id}'
+                return f'Player{self.player_id}.Piece{self.id}'
 
