@@ -1,12 +1,11 @@
-from random import randint
 from logic.ludoHandler import LudoHandler
 
 
 class LudoGame:
     def __init__(self, players_info):
         self.players_info = players_info
-        # players_name = ['Shahin', 'Saeid']
         self.players = []
+        self.pre_player = None
         self.players_n = 0
         self.lg_handler = LudoHandler()
         for color, name in players_info:
@@ -25,6 +24,7 @@ class LudoGame:
         self.get_goal = False
         self.create_new_piece = False
         self.over_roll = False
+        self.ranking = None
 
     def reset_instance_fields(self):
         self.selected_piece = None
@@ -54,7 +54,9 @@ class LudoGame:
                 else:
                     self.get_goal = True
                     self.remove_piece(self.selected_piece, self.dice_n)
-                    print(self.player.pieces_in_goal)
+                    if self.player.pieces_in_goal_label[1] == 4:
+                        self.update_ranking()
+                    print(self.player.pieces_in_goal_label)
             elif self.selected_piece in self.player.pieces_in_home[0]:
                 self.put_in_start(self.selected_piece)
             self.change_turn()
@@ -64,12 +66,10 @@ class LudoGame:
     def put_in_start(self, piece):
         print(f'{self.player}: {self.dice_n}')
         if self.dice_n == 6:
-            if len(self.player.pieces_in_home[0]) == 1 and self.player.pieces_count <= 4:
+            if self.player.pieces_count < 4:
                 self.create_new_piece = True
             self.player.get_to_start_pos(piece)
             self.put_to_board_start(piece)
-            return True
-        return False
 
     def move_in_board(self, piece, dice_n):
         if not self.board[piece.piece_pos]:
@@ -89,17 +89,19 @@ class LudoGame:
             self.board[piece.piece_pos] = piece
         else:
             self.dest_overflow = True
-            piece_in_path = self.board[piece.piece_pos]
-            piece_in_path.player.back_to_home(piece_in_path)
+            self.previous_piece = self.board[piece.piece_pos]
+            self.previous_piece.player.back_to_home(self.previous_piece)
             self.board[piece.piece_pos] = piece
 
     def remove_piece(self, piece, dice_n):
         self.board[piece.piece_pos - dice_n] = None
-        self.players_n -= 1
-        self.players.remove(self.player)
+        self.pre_player = self.player
+
+    def update_ranking(self):
+        self.ranking = sorted(self.players, key=lambda x: x.pieces_in_goal_label[1], reverse=True)
 
     def dice(self):
-        self.dice_n = randint(1, 6)
+        self.dice_n = int(input('dice: '))  # randint(1, 6)
         self.roll_c += 1
         if not self.player.pieces_in_path[0] and (self.roll_c == 3 or self.dice_n == 6):
                 self.roll_c = 0
