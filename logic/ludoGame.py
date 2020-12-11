@@ -54,9 +54,9 @@ class LudoGame:
                 else:
                     self.get_goal = True
                     self.remove_piece(self.selected_piece, self.dice_n)
-                    if self.player.pieces_in_goal_label[1] == 4:
+                    if self.player.pieces_in_goal[1] == 4:
                         self.update_ranking()
-                    print(self.player.pieces_in_goal_label)
+                    print(self.player.pieces_in_goal)
             elif self.selected_piece in self.player.pieces_in_home[0]:
                 self.put_in_start(self.selected_piece)
             self.change_turn()
@@ -101,7 +101,7 @@ class LudoGame:
         self.ranking = sorted(self.players, key=lambda x: x.pieces_in_goal_label[1], reverse=True)
 
     def dice(self):
-        self.dice_n = int(input('dice: '))  # randint(1, 6)
+        self.dice_n = randint(1, 6)
         self.roll_c += 1
         if not self.player.pieces_in_path[0] and (self.roll_c == 3 or self.dice_n == 6):
                 self.roll_c = 0

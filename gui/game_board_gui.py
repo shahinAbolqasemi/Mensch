@@ -210,9 +210,11 @@ class MainWindow(QMainWindow):
                 # piece.move(*self.goal_fields[color])
                 # piece.setDisabled(True)
                 piece.close()
-                self.pieces_in_goal_label[color].setText(f"{self.l_game.pre_player.pieces_in_goal_label[1]}")
+                self.pieces_in_goal_label[color].setText(f"{self.l_game.pre_player.pieces_in_goal[1]}")
                 if self.l_game.ranking:
                     self.show_ranking_dialog()
+                    self.board_widget.setDisabled(True)
+                    self.roll_dice_btn.setDisabled(True)
             self.update_turn()
             self.roll_dice_btn.setDisabled(False)
 
@@ -250,6 +252,7 @@ class MainWindow(QMainWindow):
         self.dice_number_label.setText('.')
         self.actionAdd_Player.setDisabled(False)
         self.actionNew_Game.setDisabled(True)
+        self.board_widget.setDisabled(False)
 
     def translate_ui(self):
         self.setWindowTitle("MainWindow")
