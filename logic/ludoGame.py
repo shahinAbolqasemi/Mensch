@@ -1,3 +1,5 @@
+from random import randint
+
 from logic.ludoHandler import LudoHandler
 
 
@@ -42,22 +44,22 @@ class LudoGame:
         self.reset_instance_fields()
         print(self.board)
         self.selected_piece = self.player.get_piece(piece_id)
-        if not self.player.pieces_in_path[1]:
+        if not self.player.pieces_in_path:
             self.put_in_start(self.selected_piece)
             if self.dice_n == 6 or self.over_roll:
                 self.change_turn()
         else:
-            if self.selected_piece in self.player.pieces_in_path[0]:
+            if self.selected_piece in self.player.pieces_in_path:
                 print(f'{self.player}: {self.dice_n}')
                 if not self.player.move_piece(self.selected_piece, self.dice_n):
                     self.move_in_board(self.selected_piece, self.dice_n)
                 else:
                     self.get_goal = True
                     self.remove_piece(self.selected_piece, self.dice_n)
-                    if self.player.pieces_in_goal[1] == 4:
+                    if len(self.player.pieces_in_goal) == 4:
                         self.update_ranking()
                     print(self.player.pieces_in_goal)
-            elif self.selected_piece in self.player.pieces_in_home[0]:
+            elif self.selected_piece in self.player.pieces_in_home:
                 self.put_in_start(self.selected_piece)
             self.change_turn()
         self.dice_n = 0
@@ -103,16 +105,16 @@ class LudoGame:
     def dice(self):
         self.dice_n = randint(1, 6)
         self.roll_c += 1
-        if not self.player.pieces_in_path[0] and (self.roll_c == 3 or self.dice_n == 6):
+        if not self.player.pieces_in_path and (self.roll_c == 3 or self.dice_n == 6):
                 self.roll_c = 0
                 self.over_roll = True
-        elif self.player.pieces_in_path[0] and self.roll_c == 1:
+        elif self.player.pieces_in_path and self.roll_c == 1:
             self.roll_c = 0
             self.over_roll = True
 
     @property
     def piece_to_move(self):
-        if not self.player.pieces_in_path[0] and self.over_roll and self.dice_n != 6:
+        if not self.player.pieces_in_path and self.over_roll and self.dice_n != 6:
             self.change_turn()
             return False
         return True

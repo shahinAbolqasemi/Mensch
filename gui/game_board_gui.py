@@ -1,6 +1,15 @@
+from enum import Enum
+
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QMainWindow, QWidget, QDialog
 from logic.ludoGame import LudoGame
+
+
+class Colors(Enum):
+    RED = 1
+    GREEN = 2
+    BLUE = 3
+    YELLOW = 4
 
 
 class MainWindow(QMainWindow):
@@ -210,7 +219,7 @@ class MainWindow(QMainWindow):
                 # piece.move(*self.goal_fields[color])
                 # piece.setDisabled(True)
                 piece.close()
-                self.pieces_in_goal_label[color].setText(f"{self.l_game.pre_player.pieces_in_goal[1]}")
+                self.pieces_in_goal_label[color].setText(f"{len(self.l_game.pre_player.pieces_in_goal)}")
                 if self.l_game.ranking:
                     self.show_ranking_dialog()
                     self.board_widget.setDisabled(True)
@@ -261,6 +270,7 @@ class MainWindow(QMainWindow):
         self.actionStart_Game.setText("Start Game")
         self.actionNew_Game.setText("New Game")
         self.actionExit.setText("Exit")
+
 
 class AddPlayerDialog(QDialog):
     def __init__(self, parent):
@@ -356,4 +366,3 @@ class RankingDialog(QDialog):
             self.verticalLayout.addWidget(player_name_label)
         spacer_item = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
         self.verticalLayout.addItem(spacer_item)
-
