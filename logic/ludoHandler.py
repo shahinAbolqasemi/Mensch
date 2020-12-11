@@ -10,18 +10,11 @@ class LudoHandler:
         self.__players_name = []
 
     def add_player(self, player_name, color):
-        # if self.__players_count < 4:
-            # chosen_color = self.__set_color()
         player = self.Player(player_name, color, self.__players_count)
         self.__players_count += 1
         self.__players_name.append(f'{player_name}: {color}')
         self.__players.append(player)
-        # sorted_key = lambda x: 1 if 'RED' in x else 2 if 'GREEN' in x else 3 \
-        #     if 'BLUE' in x else 4 if 'YELLOW' in x else None
-        # self.__players_name = sorted(self.__players_name, key=sorted_key)
         return player
-        # else:
-        #     print('Error: players count must be between 0 and 5')
 
     def __set_color(self):
         if self.__colors:
@@ -69,16 +62,11 @@ class LudoHandler:
                     return piece
 
         def get_to_start_pos(self, piece=None):
-            if not piece:
-                piece = self.pieces_in_home[0][-1]
-                del self.pieces_in_home[0][-1]
-                self.pieces_in_path[0].append(piece)
-            else:
-                self.pieces_in_home[0].remove(piece)
-                self.pieces_in_path[0].append(piece)
+            self.pieces_in_home[0].remove(piece)
+            self.pieces_in_path[0].append(piece)
             piece.get_start()
             self.pieces_in_home[1] -= 1
-            self.add_piece()
+            self.add_piece() if self.__pieces_count < 4 else None
             self.pieces_in_path[1] += 1
             return piece
 

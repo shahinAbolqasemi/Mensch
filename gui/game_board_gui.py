@@ -18,6 +18,7 @@ class MainWindow(QMainWindow):
     start_fields = {'RED': (20, 180), 'GREEN': (340, 20), 'BLUE': (180, 500), 'YELLOW': (500, 340)}
     goal_fields = {'BLUE': (260, 420), 'RED': (100, 260), 'GREEN': (260, 100), 'YELLOW': (420, 260)}
     colors = ['RED', 'GREEN', 'BLUE', 'YELLOW']
+    pieces_in_goal_label = {}
 
     def __init__(self):
         super().__init__()
@@ -35,6 +36,7 @@ class MainWindow(QMainWindow):
         self.players = []
         self.players_count = 0
         self.pieces = {'RED': [], 'GREEN': [], 'BLUE': [], 'YELLOW': []}
+        self.players_label = []
 
     def __init_menubar(self):
         self.menubar = QtWidgets.QMenuBar(self.central_widget)
@@ -56,6 +58,7 @@ class MainWindow(QMainWindow):
         self.actionExit.triggered.connect(exit)
         self.actionAdd_Player.triggered.connect(self.show_add_player_dialog)
         self.actionStart_Game.triggered.connect(self.start_game)
+        self.actionNew_Game.triggered.connect(self.new_game_btn)
 
     def __init_players_part(self):
         widget = QWidget(self.central_widget)
@@ -84,7 +87,7 @@ class MainWindow(QMainWindow):
         self.turn_status_label.setText("TURN:  ...")
         self.turn_status_label.setGeometry(QtCore.QRect(0, 10, 201, 53))
         self.turn_status_label.setFont(QtGui.QFont("Arial", 14))
-        self.turn_status_label.setStyleSheet("color: rgb(0, 170, 0);\nbackground-color: rgba(255, 255, 255, 0);")
+        self.turn_status_label.setStyleSheet("background-color: rgba(255, 255, 255, 0);")
         self.turn_status_label.setAlignment(QtCore.Qt.AlignCenter)
 
         self.roll_dice_btn = QtWidgets.QPushButton(widget)
@@ -114,20 +117,14 @@ class MainWindow(QMainWindow):
                 label = QtWidgets.QLabel(self.board_widget)
                 label.setGeometry(QtCore.QRect(*coordinate, 71, 71))
                 label.setStyleSheet(f"border-radius:35px;\nbackground-color: rgb{color};")
-
-    def show_add_player_dialog(self):
-        dlg = AddPlayerDialog(self)
-        if dlg.exec_():
-            print("Success!")
-            self.players_count += 1
-            self.players.append(dlg.player_info)
-            self.add_player(dlg.player_info[0], str(self.players_count) + '. ' + dlg.player_info[1])
-            if self.players_count == 2:
-                self.actionStart_Game.setDisabled(False)
-            if self.players_count == 4:
-                self.actionAdd_Player.setDisabled(True)
-        else:
-            print("Cancel!")
+        for color in self.goal_fields:
+            piece_in_goal_label = QtWidgets.QLabel(self.board_widget)
+            piece_in_goal_label.setText("0")
+            piece_in_goal_label.setGeometry(QtCore.QRect(*self.goal_fields[color], 51, 51))
+            piece_in_goal_label.setFont(QtGui.QFont("Arial", 30, 75))
+            piece_in_goal_label.setAlignment(QtCore.Qt.AlignCenter)
+            piece_in_goal_label.setStyleSheet("color: rgb(255, 255, 255);\nbackground-color: rgba(255, 255, 255, 0);")
+            self.pieces_in_goal_label[color] = piece_in_goal_label
 
     def start_game(self):
         self.actionStart_Game.setDisabled(True)
@@ -162,6 +159,7 @@ class MainWindow(QMainWindow):
             self.update_turn()
         elif self.l_game.over_roll:
             self.roll_dice_btn.setDisabled(True)
+        # reset l_game fields
         self.l_game.over_roll = False
 
     def add_player(self, color_name, player_info):
@@ -173,6 +171,7 @@ class MainWindow(QMainWindow):
         player.setStyleSheet(f"{self.colors_style[color_name]};\nbackground-color: rgba(255, 255, 255, 0);")
         player.setAlignment(QtCore.Qt.AlignLeading | QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
         self.verticalLayout.insertWidget(self.players_count - 1, player)
+        self.players_label.append(player)
 
     def add_piece_to_home(self, color):
         self.pieces_png = {
@@ -193,6 +192,68 @@ class MainWindow(QMainWindow):
         piece.show()
         self.pieces[color].append(piece)
 
+    def change_piece_pos(self, piece, color, piece_id):
+        pos_piece = (piece.x(), piece.y())
+        if (self.l_game.player.color == color and self.l_game.dice_n) and (
+                not (pos_piece in list(self.home_fields.values())) or (self.l_game.dice_n == 6)):
+            self.l_game.start_game(piece_id)
+            if not self.l_game.get_goal:
+                pos = self.l_game.selected_piece.piece_pos
+                piece.move(*self.path_fields[pos])
+                if self.l_game.create_new_piece:
+                    self.add_piece_to_home(self.l_game.selected_piece.color)
+                if self.l_game.dest_overflow:
+                    previous_piece = self.l_game.previous_piece
+                    pp_color = previous_piece.color
+                    self.pieces[pp_color][previous_piece.id - 1].move(*self.home_fields[pp_color])
+            else:
+                # piece.move(*self.goal_fields[color])
+                # piece.setDisabled(True)
+                piece.close()
+                self.pieces_in_goal_label[color].setText(f"{self.l_game.pre_player.pieces_in_goal[1]}")
+                if self.l_game.ranking:
+                    self.show_ranking_dialog()
+                    self.board_widget.setDisabled(True)
+                    self.roll_dice_btn.setDisabled(True)
+            self.update_turn()
+            self.roll_dice_btn.setDisabled(False)
+
+    def show_add_player_dialog(self):
+        dlg = AddPlayerDialog(self)
+        if dlg.exec_():
+            print("Success!")
+            self.players_count += 1
+            self.players.append(dlg.player_info)
+            self.add_player(dlg.player_info[0], str(self.players_count) + '. ' + dlg.player_info[1])
+            if self.players_count == 2:
+                self.actionStart_Game.setDisabled(False)
+            if self.players_count == 4:
+                self.actionAdd_Player.setDisabled(True)
+        else:
+            print("Cancel!")
+
+    def show_ranking_dialog(self):
+        dlg = RankingDialog(self, self.l_game.players)
+        dlg.exec_()
+
+    def new_game_btn(self):
+        for color in self.pieces:
+            for piece in self.pieces[color]:
+                piece.close()
+        for player in self.players_label:
+            player.close()
+        self.l_game = None
+        self.players = []
+        self.players_count = 0
+        self.pieces = {'RED': [], 'GREEN': [], 'BLUE': [], 'YELLOW': []}
+        self.roll_dice_btn.setDisabled(True)
+        self.turn_status_label.setText("Turn: ...")
+        self.turn_status_label.setStyleSheet("background-color: rgba(255, 255, 255, 0);")
+        self.dice_number_label.setText('.')
+        self.actionAdd_Player.setDisabled(False)
+        self.actionNew_Game.setDisabled(True)
+        self.board_widget.setDisabled(False)
+
     def translate_ui(self):
         self.setWindowTitle("MainWindow")
         self.menuGame.setTitle("Game")
@@ -200,17 +261,6 @@ class MainWindow(QMainWindow):
         self.actionStart_Game.setText("Start Game")
         self.actionNew_Game.setText("New Game")
         self.actionExit.setText("Exit")
-
-    def change_piece_pos(self, piece, color, piece_id):
-        if self.l_game.player.color == color and self.l_game.dice_n:
-            self.l_game.start_game(piece_id)
-            pos = self.l_game.selected_piece.piece_pos
-            piece.move(*self.path_fields[pos])
-            if self.l_game.create_new_piece:
-                self.add_piece_to_home(self.l_game.selected_piece.color)
-            self.update_turn()
-            self.roll_dice_btn.setDisabled(False)
-
 
 class AddPlayerDialog(QDialog):
     def __init__(self, parent):
@@ -271,3 +321,39 @@ class AddPlayerDialog(QDialog):
                     break
             else:
                 self.error_label.setText("Username or pass is wrong!")
+
+
+class RankingDialog(QDialog):
+    def __init__(self, parent, ranking):
+        super().__init__(parent)
+        self.setWindowTitle("Ranking")
+        self.setFixedSize(393, 300)
+        layout = QtWidgets.QWidget(self)
+        layout.setGeometry(QtCore.QRect(9, 90, 371, 191))
+        self.verticalLayout = QtWidgets.QVBoxLayout(layout)
+        self.t_font = QtGui.QFont()
+        self.t_font.setPointSize(15)
+        self.ranking_dialog_title = QtWidgets.QLabel(self)
+        self.ranking_dialog_title.setGeometry(QtCore.QRect(20, 10, 349, 71))
+        self.ranking_dialog_title.setMaximumHeight(100)
+        self.ranking_dialog_title.setFont(self.t_font)
+        self.ranking_dialog_title.setAlignment(QtCore.Qt.AlignCenter)
+        self.ranking_dialog_title.setText("<html><head/><body><p>Game Finished!</p><p>ranking:</p></body></html>")
+        self.update_ranking(ranking)
+
+    def update_ranking(self, ranking):
+        colors_style = {'RED': 'color: rgb(255, 0, 0)',
+                        'GREEN': 'color: rgb(0, 170, 0)',
+                        'BLUE': 'color: rgb(0, 0, 255)',
+                        'YELLOW': 'color: rgb(255, 255, 0)'}
+        for index, player in enumerate(ranking, 1):
+            player_name_label = QtWidgets.QLabel(self)
+            player_name_label.setText(f'{index}. {player.name}')
+            player_name_label.setMaximumHeight(18)
+            player_name_label.setFont(self.t_font)
+            player_name_label.setAlignment(QtCore.Qt.AlignCenter)
+            player_name_label.setStyleSheet(colors_style[player.color])
+            self.verticalLayout.addWidget(player_name_label)
+        spacer_item = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.verticalLayout.addItem(spacer_item)
+
